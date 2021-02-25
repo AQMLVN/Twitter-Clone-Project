@@ -1,15 +1,18 @@
 from flaskr import app, db
 from flask import jsonify
 from flaskr import helper
-
+from flaskr.helper import login_required
 from flask import (
     redirect, render_template, request, session, url_for
 )
 
 
 @app.route('/')
-def test():
-    return render_template('base.html')
+def index():
+    posts = []
+    if session.get('currentUser', None):
+        posts = helper.get_posts(helper.get_user_by_username(session['currentUser']).id)
+    return render_template('feed/index.html', posts=posts)
 
 
 @app.route('/users', methods=['POST'])
@@ -30,7 +33,7 @@ def register():
     return render_template('auth/register.html')
 
 
-@app.route('/login', methods=('GET', 'POST'))
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         return helper.login_helper(request.form)
@@ -43,7 +46,11 @@ def logout():
     return redirect(url_for('index'))
 
 
-def login_required():
-    if session.get('currentUser') is None:
-        return redirect(url_for('auth.login'))
+@app.route('/create', methods=['GET', 'POST'])
+@login_required
+def create():
+    if request.method == 'POST':
+        return helper.create_helper(request.form)
+    return render_template('feed/create.html')
+
 

@@ -26,9 +26,7 @@ def init():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        print('hi')
         return helper.register_helper(request.form)
-    print('bye')
     return render_template('auth/register.html')
 
 

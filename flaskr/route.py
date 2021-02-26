@@ -54,3 +54,19 @@ def create():
     return render_template('feed/create.html')
 
 
+@app.route('/<int:id>/update', methods=['GET', 'POST'])
+@login_required
+def update(id):
+    post = helper.get_post(id)
+    if request.method == 'POST':
+        return helper.update_helper(post, request.form)
+    return render_template('feed/update.html', post=post)
+
+
+@app.route('/<int:id>/delete', methods=['POST'])
+@login_required
+def delete(id):
+    post = helper.get_post(id)
+    db.session.delete(post)
+    db.session.commit()
+    return redirect(url_for('index'))

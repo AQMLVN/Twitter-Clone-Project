@@ -64,6 +64,26 @@ def create_helper(params):
     return redirect(url_for('create'))
 
 
+def update_helper(post, params):
+    error = None
+    title = params['title']
+    body = params['body']
+
+    if not title:
+        error = 'Title is required.'
+    elif not body:
+        error = 'Body is required.'
+
+    if error is None:
+        post.title = title
+        post.body = body
+        db.session.commit()
+        return redirect(url_for('index'))
+
+    flash(error)
+    return redirect(url_for('update'))
+
+
 def get_user_by_username(username):
     return User.query.filter_by(username=username).first()
 
@@ -85,7 +105,7 @@ def get_post(id, check_author=True):
     if not post:
         abort(404, "Post id {0} doesn't exist.".format(id))
 
-    if check_author and (post['user_id'] != get_user_by_username(session['currentUser']).id):
+    if check_author and (post.user_id != get_user_by_username(session['currentUser']).id):
         abort(403)
 
     return post

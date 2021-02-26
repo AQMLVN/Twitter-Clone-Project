@@ -1,7 +1,7 @@
 from flaskr import app, db
 from flask import jsonify
 from flaskr import helper
-from flaskr.helper import login_required
+from flaskr.helper import login_required, remove_html_tags
 from flask import (
     redirect, render_template, request, session, url_for
 )
@@ -58,15 +58,16 @@ def create():
 @login_required
 def update(id):
     post = helper.get_post(id)
+    post.body = remove_html_tags(post.body)
+
     if request.method == 'POST':
         return helper.update_helper(post, request.form)
+
     return render_template('feed/update.html', post=post)
 
 
 @app.route('/<int:id>/delete', methods=['POST'])
 @login_required
 def delete(id):
-    post = helper.get_post(id)
-    db.session.delete(post)
-    db.session.commit()
+    helper.delete_helper(id)
     return redirect(url_for('index'))

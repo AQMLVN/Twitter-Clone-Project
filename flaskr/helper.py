@@ -1,10 +1,13 @@
 from flask import redirect, url_for, flash, session
 from flaskr import db
+from flaskr.models.hashtag import Hashtag
+from flaskr.models.hashtagtype import HashtagType
 from flaskr.models.user import User
 from flaskr.models.tweet import Tweet
 import functools
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.exceptions import abort
+import re
 
 
 def register_helper(params):
@@ -58,6 +61,21 @@ def create_helper(params):
         tweet = Tweet(title=title, body=body, user_id=get_user_by_username(session['currentUser']).id)
         db.session.add(tweet)
         db.session.commit()
+        hashtags = re.findall(r'#\w+', body)
+        for ht in hashtags:
+            hashtag = get_hashtag(ht)
+            if not hashtag:
+                hashtag = Hashtag(value=ht)
+                db.session.add(hashtag)
+                db.session.commit()
+            hashtag_type = HashtagType(hashtag_id=hashtag.id, tweet_id=tweet.id)
+            db.session.add(hashtag_type)
+            db.session.commit()
+
+        tweet.body = link_hashtag(tweet.body, hashtags)
+
+        db.session.commit()
+
         return redirect(url_for('index'))
 
     flash(error)
@@ -75,13 +93,54 @@ def update_helper(post, params):
         error = 'Body is required.'
 
     if error is None:
+        hashtags = re.findall(r'#\w+', body)
+        for ht in hashtags:
+            hashtag = get_hashtag(ht)
+            if not hashtag:
+                hashtag = Hashtag(value=ht)
+                db.session.add(hashtag)
+                db.session.commit()
+            hashtag_type = HashtagType(hashtag_id=hashtag.id, tweet_id=post.id)
+            db.session.add(hashtag_type)
+            db.session.commit()
         post.title = title
         post.body = body
+        post.body = link_hashtag(post.body, hashtags)
         db.session.commit()
         return redirect(url_for('index'))
 
     flash(error)
     return redirect(url_for('update'))
+
+
+def delete_helper(id):
+    post = get_post(id)
+    hashtags = re.findall(r'#\w+', post.body)
+    for ht in hashtags:
+        hashtag = get_hashtag(ht)
+        if hashtag:
+            hashtag_type = get_hashtag_type(hashtag.id)
+            for htt in hashtag_type:
+                db.session.delete(htt)
+                db.session.commit()
+            db.session.delete(hashtag)
+            db.session.commit()
+    db.session.delete(post)
+    db.session.commit()
+    return redirect(url_for('index'))
+
+
+def link_hashtag(body, hashtags):
+    for ht in hashtags:
+        body = body.replace(ht, '<a href="http://www.google.com">' + ht + '</a>')
+    return body
+
+
+def remove_html_tags(text):
+    """Remove html tags from a string"""
+    import re
+    clean = re.compile('<.*?>')
+    return re.sub(clean, '', text)
 
 
 def get_user_by_username(username):
@@ -114,6 +173,14 @@ def get_post(id, check_author=True):
 def get_posts(author_id):
     posts = Tweet.query.filter_by(user_id=author_id).all()
     return posts
+
+
+def get_hashtag(hashtag):
+    return Hashtag.query.filter_by(value=hashtag).first()
+
+
+def get_hashtag_type(id):
+    return HashtagType.query.filter_by(hashtag_id=id).all()
 
 
 def login_required(view):

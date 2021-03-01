@@ -15,6 +15,12 @@ def index():
     return render_template('feed/index.html', posts=posts)
 
 
+@app.route('/hashtag/<int:id>')
+def hashtag(id):
+    posts = helper.get_posts_by_hashtag(id)
+    return render_template('feed/index.html', posts=posts)
+
+
 @app.route('/users', methods=['POST'])
 def create_user():
     arg = request.form

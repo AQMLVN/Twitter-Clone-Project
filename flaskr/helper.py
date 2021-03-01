@@ -132,7 +132,12 @@ def delete_helper(id):
 
 def link_hashtag(body, hashtags):
     for ht in hashtags:
-        body = body.replace(ht, '<a href="http://www.google.com">' + ht + '</a>')
+        hashtag_id = Hashtag.query.filter_by(value=ht).first()
+        print(hashtag_id.id)
+        # ht_redirect = '<a href= {{ url_for(\'hashtag\', id='+str(hashtag_id.id)+') }}>' + ht + '</a>'
+        ht_redirect = '<a href= \"/hashtag/'+str(hashtag_id.id)+'\">' + ht + '</a>'
+        print(ht_redirect)
+        body = body.replace(ht, ht_redirect)
     return body
 
 
@@ -173,6 +178,21 @@ def get_post(id, check_author=True):
 def get_posts(author_id):
     posts = Tweet.query.filter_by(user_id=author_id).all()
     return posts
+
+
+def get_posts_by_hashtag(hashtag_id):
+    test = db.session.query(
+        Tweet, HashtagType
+    ).filter(
+        HashtagType.id == hashtag_id
+    ).filter(
+        HashtagType.tweet_id == Tweet.id
+    ).all()
+    print(test)
+    htt = HashtagType.query.filter_by(hashtag_id=hashtag_id).all()
+
+    posts = Tweet.query.filter_by(id=id).first()
+    return test
 
 
 def get_hashtag(hashtag):

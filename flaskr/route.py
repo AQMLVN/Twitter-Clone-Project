@@ -18,7 +18,7 @@ def index():
 @app.route('/hashtag/<int:id>')
 def hashtag(id):
     posts = helper.get_posts_by_hashtag(id)
-    return render_template('feed/index.html', posts=posts)
+    return render_template('feed/hashtag.html', posts=posts)
 
 
 @app.route('/users', methods=['POST'])
@@ -65,6 +65,7 @@ def create():
 def update(id):
     post = helper.get_post(id)
     post.body = remove_html_tags(post.body)
+    helper.remove_hashtag(id)
 
     if request.method == 'POST':
         return helper.update_helper(post, request.form)

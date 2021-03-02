@@ -1,10 +1,7 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Posts{% endblock %}</h1>
-  {% if session['currentUser'] %}
-    <a class="action" href="{{ url_for('create') }}">New</a>
-  {% endif %}
+  <h1>{% block title %}Hashtag{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
@@ -15,9 +12,9 @@
           <h1>{{ post.Tweet['title'] }}</h1>
           <div class="about">by {{ post.User['username'] }} on {{ post.Tweet['created_at'].strftime('%Y-%m-%d') }}</div>
         </div>
-        {% if session['currentUser'] == post.User['username'] %}
-          <a class="action" href="{{ url_for('update', id=post.Tweet['id']) }}">Edit</a>
-        {% endif %}
+      {% if session['currentUser'] == post.User['username'] %}
+        <a class="action" href="{{ url_for('update', id=post.Tweet['id']) }}">Edit</a>
+      {% endif %}
       </header>
       <p class="body">{{ post.Tweet['body']|safe }}</p>
     </article>

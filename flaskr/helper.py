@@ -115,28 +115,34 @@ def update_helper(post, params):
 
 def delete_helper(id):
     post = get_post(id)
-    hashtags = re.findall(r'#\w+', post.body)
-    for ht in hashtags:
-        hashtag = get_hashtag(ht)
-        if hashtag:
-            hashtag_type = get_hashtag_type(hashtag.id)
-            for htt in hashtag_type:
-                db.session.delete(htt)
-                db.session.commit()
-            db.session.delete(hashtag)
-            db.session.commit()
+    remove_hashtag(id)
     db.session.delete(post)
     db.session.commit()
+
     return redirect(url_for('index'))
+
+
+def remove_hashtag(post_id):
+    hashtag = db.session.query(
+        Hashtag, HashtagType
+    ).join(
+        HashtagType
+    ).filter(
+        HashtagType.tweet_id == post_id
+    ).filter(
+        Hashtag.id == HashtagType.hashtag_id
+    ).all()
+
+    for ht, htt in hashtag:
+        db.session.delete(ht)
+        db.session.delete(htt)
+        db.session.commit()
 
 
 def link_hashtag(body, hashtags):
     for ht in hashtags:
         hashtag_id = Hashtag.query.filter_by(value=ht).first()
-        print(hashtag_id.id)
-        # ht_redirect = '<a href= {{ url_for(\'hashtag\', id='+str(hashtag_id.id)+') }}>' + ht + '</a>'
         ht_redirect = '<a href= \"/hashtag/'+str(hashtag_id.id)+'\">' + ht + '</a>'
-        print(ht_redirect)
         body = body.replace(ht, ht_redirect)
     return body
 
@@ -176,22 +182,30 @@ def get_post(id, check_author=True):
 
 
 def get_posts(author_id):
-    posts = Tweet.query.filter_by(user_id=author_id).all()
+    posts = db.session.query(
+        Tweet, User
+    ).join(
+        User
+    ).filter(
+        Tweet.user_id == User.id
+    ).all()
+
     return posts
 
 
 def get_posts_by_hashtag(hashtag_id):
     test = db.session.query(
-        Tweet, HashtagType
+        Tweet, User
+    ).join(
+        HashtagType
+    ).join(
+        User
     ).filter(
-        HashtagType.id == hashtag_id
+        Tweet.id == HashtagType.tweet_id
     ).filter(
-        HashtagType.tweet_id == Tweet.id
+        HashtagType.hashtag_id == hashtag_id
     ).all()
-    print(test)
-    htt = HashtagType.query.filter_by(hashtag_id=hashtag_id).all()
 
-    posts = Tweet.query.filter_by(id=id).first()
     return test
 
 

@@ -133,10 +133,12 @@ def remove_hashtag(post_id):
         Hashtag.id == HashtagType.hashtag_id
     ).all()
 
-    for ht, htt in hashtag:
-        db.session.delete(ht)
+    for ht_tuple in hashtag:
+        ht, htt = ht_tuple
+        # db.session.delete(ht)
         db.session.delete(htt)
         db.session.commit()
+        test = db.session.query(Hashtag).filter(id == ht.id).all()
 
 
 def link_hashtag(body, hashtags):
@@ -201,10 +203,12 @@ def get_posts_by_hashtag(hashtag_id):
     ).join(
         User
     ).filter(
-        Tweet.id == HashtagType.tweet_id
-    ).filter(
         HashtagType.hashtag_id == hashtag_id
     ).all()
+
+    for t in test:
+        tw, us = t
+        print(tw.id, us.username)
 
     return test
 

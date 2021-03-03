@@ -65,9 +65,9 @@ def create():
 def update(id):
     post = helper.get_post(id)
     post.body = remove_html_tags(post.body)
-    helper.remove_hashtag(id)
 
     if request.method == 'POST':
+        helper.remove_hashtag(id)
         return helper.update_helper(post, request.form)
 
     return render_template('feed/update.html', post=post)

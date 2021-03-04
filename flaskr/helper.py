@@ -1,13 +1,18 @@
+from multiprocessing.dummy import Pool
+from multiprocessing import cpu_count
+
 from flask import redirect, url_for, flash, session
 from flaskr import db
 from flaskr.models.hashtag import Hashtag
 from flaskr.models.hashtagtype import HashtagType
+from flaskr.models.like import Like
 from flaskr.models.user import User
 from flaskr.models.tweet import Tweet
 import functools
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.exceptions import abort
 import re
+import time
 
 
 def register_helper(params):
@@ -47,6 +52,23 @@ def login_helper(params):
     return redirect(url_for('login'))
 
 
+def process_hashtags(hashtag, tweet_id):
+    ht = get_hashtag(hashtag)
+    if not ht:
+        ht = Hashtag(value=hashtag)
+        db.session.add(ht)
+        db.session.commit()
+    hashtag_type = HashtagType(hashtag_id=ht.id, tweet_id=tweet_id)
+    db.session.add(hashtag_type)
+    db.session.commit()
+
+
+def multi_thread_hashtags(func, hashtags, tweet_id):
+    pool = Pool(cpu_count() * 2)
+    args = [(ht, tweet_id) for i, ht in enumerate(hashtags)]
+    pool.starmap(func, args)
+
+
 def create_helper(params):
     error = None
     title = params['title']
@@ -61,6 +83,7 @@ def create_helper(params):
         tweet = Tweet(title=title, body=body, user_id=get_user_by_username(session['currentUser']).id)
         db.session.add(tweet)
         db.session.commit()
+        start_time = time.time() * 1000
         hashtags = re.findall(r'#\w+', body)
         for ht in hashtags:
             hashtag = get_hashtag(ht)
@@ -71,7 +94,9 @@ def create_helper(params):
             hashtag_type = HashtagType(hashtag_id=hashtag.id, tweet_id=tweet.id)
             db.session.add(hashtag_type)
             db.session.commit()
-
+        # multi_thread_hashtags(process_hashtags, hashtags, tweet.id)
+        end_time = time.time() * 1000
+        print('****time taken: ', end_time - start_time)
         tweet.body = link_hashtag(tweet.body, hashtags)
 
         db.session.commit()
@@ -122,6 +147,34 @@ def delete_helper(id):
     return redirect(url_for('index'))
 
 
+def check_liked(user_id, tweet_id):
+    return Like.query.filter_by(user_id=user_id, tweet_id=tweet_id).first()
+
+
+def count_likes(tweet_id):
+    return len(Like.query.filter_by(tweet_id=tweet_id).all())
+
+
+def get_likes(posts):
+    likes = []
+    for post, user in posts:
+        likes.append(count_likes(post.id))
+
+    return likes
+
+
+def like_helper(id):
+    user = get_user_by_username(session['currentUser'])
+    liked = check_liked(user.id, id)
+    if liked:
+        db.session.delete(liked)
+        db.session.commit()
+    else:
+        like = Like(user_id=user.id, tweet_id=id)
+        db.session.add(like)
+        db.session.commit()
+
+
 def remove_hashtag(post_id):
     hashtag = db.session.query(
         Hashtag, HashtagType
@@ -135,10 +188,8 @@ def remove_hashtag(post_id):
 
     for ht_tuple in hashtag:
         ht, htt = ht_tuple
-        # db.session.delete(ht)
         db.session.delete(htt)
         db.session.commit()
-        test = db.session.query(Hashtag).filter(id == ht.id).all()
 
 
 def link_hashtag(body, hashtags):
@@ -183,7 +234,7 @@ def get_post(id, check_author=True):
     return post
 
 
-def get_posts(author_id):
+def get_posts():
     posts = db.session.query(
         Tweet, User
     ).join(
@@ -205,10 +256,6 @@ def get_posts_by_hashtag(hashtag_id):
     ).filter(
         HashtagType.hashtag_id == hashtag_id
     ).all()
-
-    for t in test:
-        tw, us = t
-        print(tw.id, us.username)
 
     return test
 

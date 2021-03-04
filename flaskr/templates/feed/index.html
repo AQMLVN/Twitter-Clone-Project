@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-  {% for post in posts %}
+  {% for post, like in posts %}
     <article class="post">
       <header>
         <div>
@@ -18,8 +18,12 @@
         {% if session['currentUser'] == post.User['username'] %}
           <a class="action" href="{{ url_for('update', id=post.Tweet['id']) }}">Edit</a>
         {% endif %}
+        {% if session['currentUser'] != post.User['username'] %}
+          <a class="action" href="{{ url_for('like', id=post.Tweet['id']) }}"><img src="static/like.png" alt="Like" height="20" width="20"></a>
+        {% endif %}
       </header>
       <p class="body">{{ post.Tweet['body']|safe }}</p>
+      <div class="like" >Likes: {{like}}</div>
     </article>
     {% if not loop.last %}
       <hr>

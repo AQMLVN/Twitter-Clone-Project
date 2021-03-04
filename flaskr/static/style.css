@@ -100,6 +100,13 @@ nav ul li a, nav ul li span, header .action {
   white-space: pre-line;
 }
 
+.post .like {
+  color: slategray;
+  font-style: italic;
+  font-size: 12px;
+}
+
+
 .content:last-child {
   margin-bottom: 0;
 }

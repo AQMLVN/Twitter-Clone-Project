@@ -10,15 +10,18 @@ from flask import (
 @app.route('/')
 def index():
     posts = []
+    likes = []
     if session.get('currentUser', None):
-        posts = helper.get_posts(helper.get_user_by_username(session['currentUser']).id)
-    return render_template('feed/index.html', posts=posts)
+        posts = helper.get_posts()
+        likes = helper.get_likes(posts)
+    return render_template('feed/index.html', posts=zip(posts, likes))
 
 
 @app.route('/hashtag/<int:id>')
 def hashtag(id):
     posts = helper.get_posts_by_hashtag(id)
-    return render_template('feed/hashtag.html', posts=posts)
+    likes = helper.get_likes(posts)
+    return render_template('feed/hashtag.html', posts=zip(posts, likes))
 
 
 @app.route('/users', methods=['POST'])
@@ -78,3 +81,10 @@ def update(id):
 def delete(id):
     helper.delete_helper(id)
     return redirect(url_for('index'))
+
+
+@app.route('/<int:id>/like')
+@login_required
+def like(id):
+    helper.like_helper(id)
+    return redirect(request.referrer)  # Redirects to same page

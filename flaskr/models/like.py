@@ -3,11 +3,11 @@ from flaskr import db
 
 class Like(db.Model):
     __tablename__ = 'Like'
-    id = db.Column(db.Integer, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
-    user = db.relationship('User', foreign_keys=['user_id'])
+    user = db.relationship('User', foreign_keys=[user_id])
     tweet_id = db.Column(db.Integer, db.ForeignKey('Tweet.id'), nullable=False)
-    tweet = db.relationship('Tweet', foreign_keys=['tweet_id'])
+    tweet = db.relationship('Tweet', foreign_keys=[tweet_id])
 
     def serialize(self):
         return {

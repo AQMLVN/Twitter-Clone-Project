@@ -7,7 +7,7 @@ class Comment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
     user = db.relationship('User', foreign_keys=[user_id])
     tweet_id = db.Column(db.Integer, db.ForeignKey('Tweet.id'), nullable=False)
-    tweet = db.relationship('Tweet', foreign_keys=['tweet_id'])
+    tweet = db.relationship('Tweet', foreign_keys=[tweet_id])
     p_comment = db.Column(db.Integer, nullable=True)
 
     def serialize(self):
